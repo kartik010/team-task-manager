@@ -148,12 +148,9 @@ Open **http://localhost:5173**
 1. Go to [railway.app/new](https://railway.app/new) → **Deploy from GitHub repo**
 2. Select **`kartik010/team-task-manager`**
 3. Click **+ New** → **Database** → **PostgreSQL**
-4. **Critical — link the database to your web service:**
-   - Open your **web app service** (the GitHub deploy, **not** the Postgres box)
-   - Go to **Variables** → **New Variable** → **Add Reference**
-   - Select your **PostgreSQL** service → choose **`DATABASE_URL`**
-   - This creates `DATABASE_URL` on the web service (without this, deploy crashes with P1012)
-5. Add these variables on the **same web service**:
+4. **Name your PostgreSQL service exactly `Postgres`** (Settings → Service name).  
+   This repo’s `railway.toml` auto-wires `DATABASE_URL` via config-as-code — see [RAILWAY_SETUP.md](./RAILWAY_SETUP.md) if it’s empty.
+5. On the **web app service**, add:
 
    | Variable | Value |
    |----------|-------|
@@ -165,7 +162,7 @@ Open **http://localhost:5173**
 7. **Redeploy** the web service (Deployments → Redeploy)
 8. Copy the public URL into this README under **Live app**
 
-> **Troubleshooting:** If logs show `Environment variable not found: DATABASE_URL`, you added Postgres but did not **reference** `DATABASE_URL` on the web service (step 4).
+> **Troubleshooting:** Empty `DATABASE_URL`? Rename Postgres service to **`Postgres`** or follow [RAILWAY_SETUP.md](./RAILWAY_SETUP.md).
 
 ### Option B — Railway CLI
 

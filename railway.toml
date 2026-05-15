@@ -1,8 +1,23 @@
+# Railway config for the WEB service (GitHub repo deploy)
+# IMPORTANT: Your PostgreSQL service name on the canvas must be exactly "Postgres"
+# (click the Postgres box → Settings → rename if needed — case-sensitive)
+
 [build]
 builder = "NIXPACKS"
 buildCommand = "npm install && npm run build && cd server && npx prisma generate"
 
 [deploy]
-startCommand = "cd server && npx prisma migrate deploy && npx tsx prisma/seed.ts && node dist/index.js"
+startCommand = "bash scripts/start-production.sh"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
+
+# Config-as-code: inject DB connection from the Postgres service (no dashboard reference needed)
+[env]
+NODE_ENV = "production"
+DATABASE_URL = "${{Postgres.DATABASE_URL}}"
+DATABASE_PRIVATE_URL = "${{Postgres.DATABASE_PRIVATE_URL}}"
+PGHOST = "${{Postgres.PGHOST}}"
+PGPORT = "${{Postgres.PGPORT}}"
+PGUSER = "${{Postgres.PGUSER}}"
+PGPASSWORD = "${{Postgres.PGPASSWORD}}"
+PGDATABASE = "${{Postgres.PGDATABASE}}"
