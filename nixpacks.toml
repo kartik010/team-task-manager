@@ -8,4 +8,4 @@ cmds = ["npm install"]
 cmds = ["npm run build", "cd server && npx prisma generate"]
 
 [start]
-cmd = "cd server && NODE_ENV=production npx prisma migrate deploy && NODE_ENV=production npx tsx prisma/seed.ts && NODE_ENV=production node dist/index.js"
+cmd = "bash scripts/start-production.sh"

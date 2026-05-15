@@ -148,19 +148,24 @@ Open **http://localhost:5173**
 1. Go to [railway.app/new](https://railway.app/new) → **Deploy from GitHub repo**
 2. Select **`kartik010/team-task-manager`**
 3. Click **+ New** → **Database** → **PostgreSQL**
-4. Open your **web service** → **Variables** and add:
+4. **Critical — link the database to your web service:**
+   - Open your **web app service** (the GitHub deploy, **not** the Postgres box)
+   - Go to **Variables** → **New Variable** → **Add Reference**
+   - Select your **PostgreSQL** service → choose **`DATABASE_URL`**
+   - This creates `DATABASE_URL` on the web service (without this, deploy crashes with P1012)
+5. Add these variables on the **same web service**:
 
    | Variable | Value |
    |----------|-------|
    | `NODE_ENV` | `production` |
-   | `JWT_SECRET` | *(generate a long random string)* |
-   | `CLIENT_URL` | `https://<your-app>.up.railway.app` *(optional — auto-detected via `RAILWAY_PUBLIC_DOMAIN`)* |
+   | `JWT_SECRET` | *(run `openssl rand -hex 32`)* |
+   | `CLIENT_URL` | *(optional — auto-detected from `RAILWAY_PUBLIC_DOMAIN`)* |
 
-5. **Settings** → **Networking** → **Generate Domain**
-6. Copy the public URL into this README under **Live app**
-7. Redeploy if you set `CLIENT_URL` manually
+6. **Settings** → **Networking** → **Generate Domain**
+7. **Redeploy** the web service (Deployments → Redeploy)
+8. Copy the public URL into this README under **Live app**
 
-Railway automatically provides `DATABASE_URL` when PostgreSQL is linked to the service.
+> **Troubleshooting:** If logs show `Environment variable not found: DATABASE_URL`, you added Postgres but did not **reference** `DATABASE_URL` on the web service (step 4).
 
 ### Option B — Railway CLI
 
