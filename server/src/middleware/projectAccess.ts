@@ -1,5 +1,6 @@
 import type { Response, NextFunction } from "express";
 import { prisma } from "../lib/prisma.js";
+import { param } from "../utils/params.js";
 import type { AuthRequest } from "./auth.js";
 
 export async function requireProjectAccess(
@@ -7,7 +8,7 @@ export async function requireProjectAccess(
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  const projectId = req.params.projectId ?? req.params.id;
+  const projectId = param(req.params.projectId ?? req.params.id);
   const userId = req.user?.userId;
 
   if (!projectId || !userId) {

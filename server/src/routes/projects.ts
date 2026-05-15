@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { authenticate, requireAdmin, type AuthRequest } from "../middleware/auth.js";
 import { requireProjectAccess } from "../middleware/projectAccess.js";
+import { param } from "../utils/params.js";
 
 const router = Router();
 
@@ -68,8 +69,9 @@ router.post("/", requireAdmin, async (req: AuthRequest, res) => {
 });
 
 router.get("/:id", requireProjectAccess, async (req, res) => {
+  const id = param(req.params.id);
   const project = await prisma.project.findUnique({
-    where: { id: req.params.id },
+    where: { id },
     include: {
       owner: { select: { id: true, name: true, email: true } },
       members: {
@@ -94,6 +96,7 @@ router.get("/:id", requireProjectAccess, async (req, res) => {
 });
 
 router.patch("/:id", requireAdmin, requireProjectAccess, async (req, res) => {
+  const id = param(req.params.id);
   const parsed = projectSchema.partial().safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -101,7 +104,7 @@ router.patch("/:id", requireAdmin, requireProjectAccess, async (req, res) => {
   }
 
   const project = await prisma.project.update({
-    where: { id: req.params.id },
+    where: { id },
     data: parsed.data,
     include: {
       owner: { select: { id: true, name: true, email: true } },
@@ -115,18 +118,19 @@ router.patch("/:id", requireAdmin, requireProjectAccess, async (req, res) => {
 });
 
 router.delete("/:id", requireAdmin, async (req, res) => {
-  await prisma.project.delete({ where: { id: req.params.id } });
+  await prisma.project.delete({ where: { id: param(req.params.id) } });
   res.status(204).send();
 });
 
 router.post("/:id/members", requireAdmin, async (req, res) => {
+  const id = param(req.params.id);
   const parsed = memberSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
     return;
   }
 
-  const project = await prisma.project.findUnique({ where: { id: req.params.id } });
+  const project = await prisma.project.findUnique({ where: { id } });
   if (!project) {
     res.status(404).json({ error: "Project not found" });
     return;
@@ -140,9 +144,9 @@ router.post("/:id/members", requireAdmin, async (req, res) => {
 
   const member = await prisma.projectMember.upsert({
     where: {
-      projectId_userId: { projectId: req.params.id, userId: parsed.data.userId },
+      projectId_userId: { projectId: id, userId: parsed.data.userId },
     },
-    create: { projectId: req.params.id, userId: parsed.data.userId },
+    create: { projectId: id, userId: parsed.data.userId },
     update: {},
     include: { user: { select: { id: true, name: true, email: true, role: true } } },
   });
@@ -153,7 +157,10 @@ router.post("/:id/members", requireAdmin, async (req, res) => {
 router.delete("/:id/members/:userId", requireAdmin, async (req, res) => {
   await prisma.projectMember.delete({
     where: {
-      projectId_userId: { projectId: req.params.id, userId: req.params.userId },
+      projectId_userId: {
+        projectId: param(req.params.id),
+        userId: param(req.params.userId),
+      },
     },
   });
   res.status(204).send();

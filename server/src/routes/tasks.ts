@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { authenticate, requireAdmin, type AuthRequest } from "../middleware/auth.js";
 import { requireProjectAccess } from "../middleware/projectAccess.js";
+import { param } from "../utils/params.js";
 
 const router = Router();
 
@@ -17,8 +18,9 @@ const taskSchema = z.object({
 router.use(authenticate);
 
 router.get("/project/:projectId", requireProjectAccess, async (req, res) => {
+  const projectId = param(req.params.projectId);
   const tasks = await prisma.task.findMany({
-    where: { projectId: req.params.projectId },
+    where: { projectId },
     include: {
       assignee: { select: { id: true, name: true, email: true } },
       createdBy: { select: { id: true, name: true } },
@@ -29,6 +31,7 @@ router.get("/project/:projectId", requireProjectAccess, async (req, res) => {
 });
 
 router.post("/project/:projectId", requireProjectAccess, async (req: AuthRequest, res) => {
+  const projectId = param(req.params.projectId);
   const parsed = taskSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -40,7 +43,7 @@ router.post("/project/:projectId", requireProjectAccess, async (req: AuthRequest
     const membership = await prisma.projectMember.findUnique({
       where: {
         projectId_userId: {
-          projectId: req.params.projectId,
+          projectId,
           userId: req.user!.userId,
         },
       },
@@ -56,7 +59,7 @@ router.post("/project/:projectId", requireProjectAccess, async (req: AuthRequest
   if (assigneeId) {
     const member = await prisma.projectMember.findUnique({
       where: {
-        projectId_userId: { projectId: req.params.projectId, userId: assigneeId },
+        projectId_userId: { projectId, userId: assigneeId },
       },
     });
     if (!member) {
@@ -68,7 +71,7 @@ router.post("/project/:projectId", requireProjectAccess, async (req: AuthRequest
   const task = await prisma.task.create({
     data: {
       ...rest,
-      projectId: req.params.projectId,
+      projectId,
       createdById: req.user!.userId,
       assigneeId: assigneeId ?? null,
       dueDate: dueDate ? new Date(dueDate) : null,
@@ -83,6 +86,7 @@ router.post("/project/:projectId", requireProjectAccess, async (req: AuthRequest
 });
 
 router.patch("/:id", async (req: AuthRequest, res) => {
+  const id = param(req.params.id);
   const parsed = taskSchema.partial().safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.flatten() });
@@ -90,8 +94,7 @@ router.patch("/:id", async (req: AuthRequest, res) => {
   }
 
   const existing = await prisma.task.findUnique({
-    where: { id: req.params.id },
-    include: { project: { include: { members: true } } },
+    where: { id },
   });
 
   if (!existing) {
@@ -99,11 +102,13 @@ router.patch("/:id", async (req: AuthRequest, res) => {
     return;
   }
 
+  const members = await prisma.projectMember.findMany({
+    where: { projectId: existing.projectId },
+  });
+
   const isAdmin = req.user!.role === "ADMIN";
   const isAssignee = existing.assigneeId === req.user!.userId;
-  const isMember = existing.project.members.some(
-    (m: { userId: string }) => m.userId === req.user!.userId
-  );
+  const isMember = members.some((m) => m.userId === req.user!.userId);
 
   if (!isAdmin && !isAssignee && !isMember) {
     res.status(403).json({ error: "Access denied" });
@@ -133,7 +138,7 @@ router.patch("/:id", async (req: AuthRequest, res) => {
   }
 
   const task = await prisma.task.update({
-    where: { id: req.params.id },
+    where: { id },
     data: {
       ...rest,
       assigneeId: assigneeId === undefined ? undefined : assigneeId,
@@ -150,7 +155,7 @@ router.patch("/:id", async (req: AuthRequest, res) => {
 });
 
 router.delete("/:id", requireAdmin, async (req, res) => {
-  await prisma.task.delete({ where: { id: req.params.id } });
+  await prisma.task.delete({ where: { id: param(req.params.id) } });
   res.status(204).send();
 });
 

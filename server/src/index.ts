@@ -1,4 +1,5 @@
 import "dotenv/config";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
@@ -43,16 +44,23 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
-if (process.env.NODE_ENV === "production") {
+if (isProduction) {
   const clientDist = path.join(__dirname, "../../client/dist");
-  app.use(express.static(clientDist));
-  app.get(/^(?!\/api).*/, (_req, res) => {
-    res.sendFile(path.join(clientDist, "index.html"), (err) => {
-      if (err) res.status(404).json({ error: "Not found" });
+  if (fs.existsSync(clientDist)) {
+    app.use(express.static(clientDist));
+    app.get(/^(?!\/api).*/, (_req, res) => {
+      res.sendFile(path.join(clientDist, "index.html"), (err) => {
+        if (err) res.status(404).json({ error: "Not found" });
+      });
     });
-  });
+  } else {
+    console.warn("client/dist not found — API only mode");
+    app.get("/", (_req, res) => {
+      res.json({ message: "Team Task Manager API", health: "/api/health" });
+    });
+  }
 }
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
 });

@@ -69,10 +69,13 @@ export NODE_ENV="${NODE_ENV:-production}"
 cd "$ROOT/server"
 
 echo "→ Running migrations..."
-npx prisma migrate deploy
+if ! npx prisma migrate deploy; then
+  echo "Migration failed — check DATABASE_URL"
+  exit 1
+fi
 
-echo "→ Seeding demo data..."
-npx tsx prisma/seed.ts
+echo "→ Seeding demo data (non-fatal if already seeded)..."
+npx tsx prisma/seed.ts || echo "Seed skipped or already applied"
 
-echo "→ Starting server on port ${PORT:-3001}..."
-node dist/index.js
+echo "→ Starting server on port ${PORT:-8080}..."
+exec node dist/index.js
