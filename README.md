@@ -1,136 +1,252 @@
 # Team Task Manager
 
-Full-stack web app for creating projects, assigning tasks, and tracking progress with **Admin** and **Member** role-based access control.
+Full-stack web application for creating projects, assigning tasks, and tracking team progress with **role-based access control** (Admin & Member).
 
-Built with **Express + PostgreSQL + Prisma** (backend) and **React + Vite + Tailwind** (frontend). Authentication uses **JWT + bcrypt** — no Clerk or Supabase.
+**Live app:** _Add your Railway URL here after deploy (Settings → Networking → Generate Domain)_
 
-## Features
+**GitHub:** https://github.com/kartik010/team-task-manager
 
-- **Authentication** — Sign up and log in
-- **RBAC** — Admin vs Member permissions
-- **Projects** — Create projects, add/remove team members (Admin)
-- **Tasks** — Create, assign, update status, due dates
-- **Dashboard** — Task counts by status, overdue tasks, assigned work
+---
+
+## Assignment overview
+
+| Requirement | Implementation |
+|-------------|----------------|
+| Authentication | JWT + bcrypt signup/login |
+| Projects & teams | CRUD projects, add/remove members |
+| Tasks | Create, assign, status tracking, due dates |
+| Dashboard | Status breakdown, overdue tasks, my tasks |
+| REST API | Express 5 (`/api/*`) |
+| Database | PostgreSQL + Prisma ORM |
+| RBAC | Admin vs Member permissions |
+| Deployment | Railway + PostgreSQL plugin |
+
+Built **without Clerk or Supabase** — custom auth and self-hosted PostgreSQL.
+
+---
+
+## Demo accounts
+
+After the database is seeded (automatic on Railway deploy):
+
+| Role | Email | Password |
+|------|-------|----------|
+| **Admin** | admin@example.com | password123 |
+| **Member** | member@example.com | password123 |
+
+---
 
 ## Tech stack
 
 | Layer | Technology |
 |-------|------------|
-| API | Express 5, REST |
-| Database | PostgreSQL + Prisma ORM |
-| Auth | JWT, bcryptjs |
-| Frontend | React 19, React Router, Tailwind CSS 4 |
-| Validation | Zod |
+| Frontend | React 19, Vite, Tailwind CSS 4, React Router |
+| Backend | Node.js, Express 5, Zod validation |
+| Database | PostgreSQL 16 |
+| ORM | Prisma 6 |
+| Auth | jsonwebtoken + bcryptjs |
+| Hosting | Railway |
 
-## Quick start (local)
+---
+
+## Features
+
+### Authentication
+- User registration and login
+- JWT bearer tokens (7-day expiry)
+- First registered user becomes Admin
+
+### Role-based access control
+
+| Action | Admin | Member |
+|--------|:-----:|:------:|
+| Create / delete projects | ✅ | ❌ |
+| Add / remove team members | ✅ | ❌ |
+| View projects they belong to | ✅ | ✅ |
+| Create tasks in a project | ✅ | ✅ |
+| Update task status | ✅ | ✅ |
+| Edit task details / delete tasks | ✅ | ❌ |
+
+### Dashboard
+- Project and task counts
+- Tasks grouped by status (To Do, In Progress, Done)
+- Overdue task highlights
+- Recently updated tasks
+
+---
+
+## API reference
+
+Base URL (local): `http://localhost:3001`  
+Base URL (production): `https://<your-railway-domain>`
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/api/auth/signup` | — | Register new user |
+| `POST` | `/api/auth/login` | — | Login, returns JWT |
+| `GET` | `/api/auth/me` | ✅ | Current user profile |
+| `GET` | `/api/auth/users` | ✅ | List users (for assigning members) |
+| `GET` | `/api/projects` | ✅ | List accessible projects |
+| `POST` | `/api/projects` | Admin | Create project |
+| `GET` | `/api/projects/:id` | ✅ | Project detail + tasks |
+| `PATCH` | `/api/projects/:id` | Admin | Update project |
+| `DELETE` | `/api/projects/:id` | Admin | Delete project |
+| `POST` | `/api/projects/:id/members` | Admin | Add team member |
+| `DELETE` | `/api/projects/:id/members/:userId` | Admin | Remove member |
+| `GET` | `/api/tasks/project/:projectId` | ✅ | List project tasks |
+| `POST` | `/api/tasks/project/:projectId` | ✅ | Create task |
+| `PATCH` | `/api/tasks/:id` | ✅ | Update task |
+| `DELETE` | `/api/tasks/:id` | Admin | Delete task |
+| `GET` | `/api/dashboard` | ✅ | Dashboard statistics |
+| `GET` | `/api/health` | — | Health check |
+
+Protected routes require header: `Authorization: Bearer <token>`
+
+---
+
+## Local development
 
 ### Prerequisites
-
 - Node.js 20+
-- PostgreSQL (local or Docker)
+- PostgreSQL (Homebrew, Docker, or native)
 
-### 1. Database
-
-```bash
-docker run --name ttm-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=team_task_manager -p 5432:5432 -d postgres:16
-```
-
-### 2. Environment
+### Setup
 
 ```bash
-cp server/.env.example server/.env
-```
+# Clone
+git clone https://github.com/kartik010/team-task-manager.git
+cd team-task-manager
 
-Edit `server/.env` if needed. Default `DATABASE_URL`:
-
-```
-postgresql://postgres:postgres@localhost:5432/team_task_manager
-```
-
-### 3. Install & migrate
-
-```bash
+# Install dependencies
 npm install
-cd server && npx prisma migrate deploy && npm run db:seed
-```
 
-### 4. Run
+# Configure environment
+cp server/.env.example server/.env
+# Edit DATABASE_URL for your local Postgres user
 
-```bash
+# Create database (if needed)
+createdb team_task_manager
+
+# Migrate & seed
+cd server
+npx prisma migrate deploy
+npm run db:seed
+cd ..
+
+# Run (API :3001, UI :5173)
 npm run dev
 ```
 
-- Frontend: http://localhost:5173  
-- API: http://localhost:3001  
+Open **http://localhost:5173**
 
-### Demo accounts (after seed)
-
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@example.com | password123 |
-| Member | member@example.com | password123 |
-
-## API overview
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/signup` | Register |
-| POST | `/api/auth/login` | Login |
-| GET | `/api/auth/me` | Current user |
-| GET | `/api/projects` | List projects |
-| POST | `/api/projects` | Create project (Admin) |
-| GET | `/api/projects/:id` | Project detail + tasks |
-| POST | `/api/projects/:id/members` | Add member (Admin) |
-| GET | `/api/tasks/project/:projectId` | List tasks |
-| POST | `/api/tasks/project/:projectId` | Create task |
-| PATCH | `/api/tasks/:id` | Update task |
-| GET | `/api/dashboard` | Dashboard stats |
-
-All protected routes require `Authorization: Bearer <token>`.
-
-## RBAC
-
-| Action | Admin | Member |
-|--------|-------|--------|
-| Create/delete projects | Yes | No |
-| Add/remove members | Yes | No |
-| View own projects | Yes | Yes |
-| Create tasks | Yes | Yes (in member projects) |
-| Update task status | Yes | Yes (assigned or project member) |
-| Edit task details / delete | Yes | No |
+---
 
 ## Deploy on Railway
 
-1. Push this repo to GitHub.
-2. Create a [Railway](https://railway.app) project → **Deploy from GitHub**.
-3. Add a **PostgreSQL** plugin; Railway sets `DATABASE_URL` automatically.
-4. Set environment variables on the web service:
-   - `JWT_SECRET` — long random string
-   - `NODE_ENV` — `production`
-   - `CLIENT_URL` — your Railway app URL (e.g. `https://your-app.up.railway.app`)
-5. Deploy. The start command runs migrations, seeds demo data, and serves API + frontend.
+### Option A — GitHub (recommended)
 
-### Build / start (configured in `nixpacks.toml`)
+1. Go to [railway.app/new](https://railway.app/new) → **Deploy from GitHub repo**
+2. Select **`kartik010/team-task-manager`**
+3. Click **+ New** → **Database** → **PostgreSQL**
+4. Open your **web service** → **Variables** and add:
 
-- **Build:** `npm run build` + `prisma generate`
-- **Start:** migrate → seed → `node server/dist/index.js`
+   | Variable | Value |
+   |----------|-------|
+   | `NODE_ENV` | `production` |
+   | `JWT_SECRET` | *(generate a long random string)* |
+   | `CLIENT_URL` | `https://<your-app>.up.railway.app` *(optional — auto-detected via `RAILWAY_PUBLIC_DOMAIN`)* |
+
+5. **Settings** → **Networking** → **Generate Domain**
+6. Copy the public URL into this README under **Live app**
+7. Redeploy if you set `CLIENT_URL` manually
+
+Railway automatically provides `DATABASE_URL` when PostgreSQL is linked to the service.
+
+### Option B — Railway CLI
+
+```bash
+npm install -g @railway/cli
+railway login
+cd team-task-manager
+railway init
+railway add --database postgres
+railway variables set NODE_ENV=production JWT_SECRET="$(openssl rand -hex 32)"
+railway up
+railway domain
+```
+
+### What runs on deploy
+
+Configured in `nixpacks.toml` / `railway.json`:
+
+1. `npm install` → `npm run build` → `prisma generate`
+2. `prisma migrate deploy` — apply schema
+3. `prisma/seed.ts` — demo users & sample project
+4. `node server/dist/index.js` — serves API + React build
+
+---
 
 ## Submission checklist
 
-- [ ] Live Railway URL
-- [ ] GitHub repository link
-- [ ] This README
-- [ ] 2–5 minute demo video (signup, projects, tasks, dashboard, admin vs member)
+- [ ] **Live URL** — Railway public domain (update top of README)
+- [x] **GitHub** — https://github.com/kartik010/team-task-manager
+- [x] **README** — this file
+- [ ] **Demo video** (2–5 min) covering:
+  - Login as Admin and Member
+  - Create a project and add a member
+  - Create and assign tasks, change status
+  - Dashboard (overdue + status counts)
+
+---
 
 ## Project structure
 
 ```
-├── client/          React frontend
-├── server/          Express API + Prisma
-│   └── prisma/      Schema, migrations, seed
-├── package.json     Root scripts
+team-task-manager/
+├── client/                 # React frontend (Vite)
+│   └── src/
+│       ├── pages/          # Login, Dashboard, Projects
+│       ├── context/        # Auth state
+│       └── api/            # Fetch wrapper
+├── server/                 # Express API
+│   ├── prisma/
+│   │   ├── schema.prisma   # Data model
+│   │   ├── migrations/
+│   │   └── seed.ts         # Demo data
+│   └── src/
+│       ├── routes/         # REST endpoints
+│       └── middleware/     # JWT + RBAC
+├── nixpacks.toml           # Railway build config
+├── railway.json
 └── README.md
 ```
+
+---
+
+## Data model
+
+```
+User ──┬── owns ──► Project ──► Task
+       ├── member of ──► ProjectMember ◄── Project
+       ├── assigned ──► Task
+       └── creates ──► Task
+```
+
+**Enums:** `Role` (ADMIN, MEMBER) · `TaskStatus` (TODO, IN_PROGRESS, DONE)
+
+---
+
+## Environment variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `JWT_SECRET` | Yes | Secret for signing JWTs |
+| `PORT` | No | Server port (Railway sets automatically) |
+| `NODE_ENV` | Prod | Set to `production` on Railway |
+| `CLIENT_URL` | No | CORS origin (auto from `RAILWAY_PUBLIC_DOMAIN`) |
+
+---
 
 ## License
 
