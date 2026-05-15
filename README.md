@@ -120,9 +120,9 @@ cd team-task-manager
 # Install dependencies
 npm install
 
-# Configure environment
+# Configure environment (local only — not used on Railway)
 cp server/.env.example server/.env
-# Edit DATABASE_URL for your local Postgres user
+# Edit DATABASE_URL in .env for your local Postgres user (see comments in file)
 
 # Create database (if needed)
 createdb team_task_manager
@@ -240,13 +240,27 @@ User ──┬── owns ──► Project ──► Task
 
 ## Environment variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DATABASE_URL` | Yes | PostgreSQL connection string |
-| `JWT_SECRET` | Yes | Secret for signing JWTs |
-| `PORT` | No | Server port (Railway sets automatically) |
-| `NODE_ENV` | Prod | Set to `production` on Railway |
-| `CLIENT_URL` | No | CORS origin (auto from `RAILWAY_PUBLIC_DOMAIN`) |
+### Local (`server/.env` — copy from `.env.example`)
+
+| Variable | Example (local) |
+|----------|-------------------|
+| `DATABASE_URL` | `postgresql://YOUR_USER@localhost:5432/team_task_manager` |
+| `JWT_SECRET` | any string for dev |
+| `PORT` | `3001` |
+| `NODE_ENV` | `development` |
+| `CLIENT_URL` | `http://localhost:5173` |
+
+### Production (Railway — **do not use `.env.example` values**)
+
+| Variable | How to set |
+|----------|------------|
+| `DATABASE_URL` | Auto via `railway.toml` → `${{Postgres.DATABASE_URL}}` |
+| `JWT_SECRET` | **Required** — set in Railway Variables (`openssl rand -hex 32`) |
+| `NODE_ENV` | `production` (in `railway.toml`) |
+| `PORT` | Set automatically by Railway |
+| `CLIENT_URL` | Optional — auto from `RAILWAY_PUBLIC_DOMAIN` |
+
+See `server/.env.production.example` and [RAILWAY_SETUP.md](./RAILWAY_SETUP.md).
 
 ---
 

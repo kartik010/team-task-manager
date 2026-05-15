@@ -10,17 +10,25 @@ import dashboardRoutes from "./routes/dashboard.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 3001;
+const isProduction = process.env.NODE_ENV === "production";
 const railwayUrl = process.env.RAILWAY_PUBLIC_DOMAIN
   ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
   : null;
 const CLIENT_URL =
-  process.env.CLIENT_URL ?? railwayUrl ?? "http://localhost:5173";
+  process.env.CLIENT_URL ??
+  railwayUrl ??
+  (isProduction ? undefined : "http://localhost:5173");
 
 const app = express();
 
+const corsOrigins = [
+  CLIENT_URL,
+  ...(isProduction ? [] : ["http://localhost:5173"]),
+].filter(Boolean) as string[];
+
 app.use(
   cors({
-    origin: [CLIENT_URL, "http://localhost:5173"],
+    origin: corsOrigins.length > 0 ? corsOrigins : true,
     credentials: true,
   })
 );
