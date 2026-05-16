@@ -102,14 +102,14 @@ router.patch("/:id", async (req: AuthRequest, res) => {
     return;
   }
 
-  const members = await prisma.projectMember.findMany({
-    where: { projectId: existing.projectId },
-    select: { userId: true },
+  const uid = req.user!.userId;
+  const membershipCount = await prisma.projectMember.count({
+    where: { projectId: existing.projectId, userId: uid },
   });
 
   const isAdmin = req.user!.role === "ADMIN";
-  const isAssignee = existing.assigneeId === req.user!.userId;
-  const isMember = members.some((m) => m.userId === req.user!.userId);
+  const isAssignee = existing.assigneeId === uid;
+  const isMember = membershipCount > 0;
 
   if (!isAdmin && !isAssignee && !isMember) {
     res.status(403).json({ error: "Access denied" });
