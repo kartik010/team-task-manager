@@ -1,5 +1,5 @@
 # Railway config for the WEB service (GitHub repo deploy)
-# IMPORTANT: Your PostgreSQL service name on the canvas must be exactly "Postgres"
+# IMPORTANT: Your PostgreSQL service name on the canvas must be exactly "Postgres-0G3F"
 # (click the Postgres box → Settings → rename if needed — case-sensitive)
 
 [build]
@@ -16,10 +16,10 @@ restartPolicyMaxRetries = 10
 # Config-as-code: inject DB connection from the Postgres service (no dashboard reference needed)
 [env]
 NODE_ENV = "production"
-DATABASE_URL = "${{Postgres.DATABASE_URL}}"
-DATABASE_PRIVATE_URL = "${{Postgres.DATABASE_PRIVATE_URL}}"
-PGHOST = "${{Postgres.PGHOST}}"
-PGPORT = "${{Postgres.PGPORT}}"
-PGUSER = "${{Postgres.PGUSER}}"
-PGPASSWORD = "${{Postgres.PGPASSWORD}}"
-PGDATABASE = "${{Postgres.PGDATABASE}}"
+DATABASE_URL = "${{Postgres-0G3F.DATABASE_URL}}"
+DATABASE_PRIVATE_URL = "${{Postgres-0G3F.DATABASE_PRIVATE_URL}}"
+PGHOST = "${{Postgres-0G3F.PGHOST}}"
+PGPORT = "${{Postgres-0G3F.PGPORT}}"
+PGUSER = "${{Postgres-0G3F.PGUSER}}"
+PGPASSWORD = "${{Postgres-0G3F.PGPASSWORD}}"
+PGDATABASE = "${{Postgres-0G3F.PGDATABASE}}"
