@@ -1,3 +1,4 @@
+import type { ProjectMember } from "@prisma/client";
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
@@ -108,7 +109,9 @@ router.patch("/:id", async (req: AuthRequest, res) => {
 
   const isAdmin = req.user!.role === "ADMIN";
   const isAssignee = existing.assigneeId === req.user!.userId;
-  const isMember = members.some((m) => m.userId === req.user!.userId);
+  const isMember = members.some(
+    (m: ProjectMember) => m.userId === req.user!.userId
+  );
 
   if (!isAdmin && !isAssignee && !isMember) {
     res.status(403).json({ error: "Access denied" });
